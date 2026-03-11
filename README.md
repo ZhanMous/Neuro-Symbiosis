@@ -54,6 +54,14 @@ cd /home/yanshi/Neuro-Symbiosis
 bash scripts/run_dp_sweep.sh
 ```
 
+4) Multi-seed robustness and DP-MIA evaluation
+
+```bash
+cd /home/yanshi/Neuro-Symbiosis
+PYTHONPATH=src python -m neuro_symbiosis.multiseed_benchmark --config configs/quick.yaml --seeds 42 43 44 --num-batches 10
+PYTHONPATH=src python -m neuro_symbiosis.dp_mia_eval --config configs/quick.yaml
+```
+
 ## Project structure
 
 - `src/neuro_symbiosis/models`: SNN, Transformer, and hybrid model
@@ -65,12 +73,16 @@ bash scripts/run_dp_sweep.sh
 - `src/neuro_symbiosis/dp_sweep.py`: DP-SGD sweep + summary table
 - `docs/literature_notes.md`: public-source notes for BCI and tooling
 - `docs/research_plan.md`: 8-week execution plan for this topic
+- `docs/energy_mechanism_hypothesis.md`: falsifiable energy-coupling hypothesis
+- `docs/neurips_rebuild_plan.md`: NeurIPS-oriented rebuild plan and milestones
 - `paper/Neuro-Symbiosis_Draft_v1_zh.md`: Chinese first draft manuscript
 
 ## Datasets suggested for next step
 
 - BCI Competition IV 2a and 2b
 - PhysioNet EEG Motor Movement/Imagery (eegmmidb)
+
+Note: `eegmmidb` is the PhysioNet EEG Motor Movement/Imagery dataset itself. If adding a third dataset, choose a different corpus.
 
 Current default uses synthetic EEG-like signals so the full pipeline can be tested without dataset download.
 
