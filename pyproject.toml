@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neuro-symbiosis"
+version = "0.1.0"
+description = "SNN-Transformer hybrid decoding for BCI with privacy and energy co-optimization"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.3.0",
+  "numpy>=1.24.0",
+  "PyYAML>=6.0.1",
+  "tqdm>=4.66.0",
+  "scikit-learn>=1.4.0",
+  "matplotlib>=3.8.0",
+  "opacus>=1.5.0",
+  "scipy>=1.11.0"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

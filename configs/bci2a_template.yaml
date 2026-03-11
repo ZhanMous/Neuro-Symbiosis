@@ -1,0 +1,32 @@
+seed: 42
+
+data:
+  dataset: bci_iv_2a_npz
+  data_path: data/processed/bci2a_preprocessed.npz
+  num_classes: 4
+  channels: 22
+  time_steps: 256
+  train_ratio: 0.8
+
+model:
+  type: hybrid
+  embed_dim: 128
+  snn_hidden: 128
+  lif_beta: 0.9
+  threshold: 1.0
+  transformer_layers: 2
+  transformer_heads: 4
+  dropout: 0.1
+
+train:
+  batch_size: 64
+  epochs: 30
+  lr: 0.001
+  weight_decay: 0.0001
+  grad_clip: 1.0
+  dp_enabled: false
+  dp_noise_multiplier: 1.1
+  dp_max_grad_norm: 1.0
+
+device: cuda
+output_dir: outputs/bci2a_hybrid
