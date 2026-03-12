@@ -27,9 +27,16 @@ def main(input_npz: str, output_npz: str, fs: float, low_hz: float, high_hz: flo
     data = np.load(in_path)
     x = data["x"].astype(np.float32)
     y = data["y"].astype(np.int64).reshape(-1)
+    subjects = None
+    for key in ("subjects", "subject"):
+        if key in data:
+            subjects = data[key].astype(np.int64).reshape(-1)
+            break
 
     if x.ndim != 3:
         raise ValueError("Expected x shape [N, C, T]")
+    if subjects is not None and subjects.shape[0] != x.shape[0]:
+        raise ValueError("subjects must have the same number of samples as x")
 
     if t_start >= 0 and t_len > 0:
         x = x[:, :, t_start : t_start + t_len]
@@ -38,8 +45,18 @@ def main(input_npz: str, output_npz: str, fs: float, low_hz: float, high_hz: flo
     x = zscore_per_channel(x)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(out_path, x=x, y=y)
-    print({"input": str(in_path), "output": str(out_path), "x_shape": list(x.shape)})
+    save_kwargs = {"x": x, "y": y}
+    if subjects is not None:
+        save_kwargs["subjects"] = subjects
+    np.savez_compressed(out_path, **save_kwargs)
+    print(
+        {
+            "input": str(in_path),
+            "output": str(out_path),
+            "x_shape": list(x.shape),
+            "has_subjects": subjects is not None,
+        }
+    )
 
 
 def parse_args() -> argparse.Namespace:

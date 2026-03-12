@@ -40,6 +40,18 @@ python scripts/preprocess_bci2a_npz.py \
 PYTHONPATH=src python -m neuro_symbiosis.train --config configs/bci2a_template.yaml
 ```
 
+For real LOSO evaluation, the NPZ must also contain a per-sample `subjects` array.
+
+```bash
+cd /home/yanshi/Neuro-Symbiosis
+PYTHONPATH=src python -m neuro_symbiosis.bci2a_loso \
+	--data-path data/processed/bci2a_preprocessed.npz \
+	--model-types hybrid snn transformer \
+	--epochs 5 --batch-size 32
+```
+
+The currently checked-in sample `data/raw/bci2a_raw.npz` / `data/processed/bci2a_preprocessed.npz` contains only `x` and `y` with 320 samples, so it is suitable for pipeline validation but not for subject-level LOSO benchmarking.
+
 2) Baselines and Pareto figure (SNN / Transformer / Hybrid)
 
 ```bash

@@ -67,3 +67,18 @@ def test_load_bci_npz_label_shift(tmp_path: Path):
     assert lx.shape == x.shape
     assert ly.min() == 0
     assert ly.max() == 3
+
+
+def test_load_bci_npz_with_subjects(tmp_path: Path):
+    x = np.random.randn(12, 22, 128).astype(np.float32)
+    y = np.array([1, 2, 3, 4] * 3, dtype=np.int64)
+    subjects = np.repeat(np.array([1, 2, 3]), 4)
+    f = tmp_path / "bci_subjects.npz"
+    np.savez_compressed(f, x=x, y=y, subjects=subjects)
+
+    lx, ly, ls = load_bci_iv_2a_npz(f, return_subjects=True)
+    assert lx.shape == x.shape
+    assert ly.min() == 0
+    assert ly.max() == 3
+    assert ls.shape == (12,)
+    assert set(ls.tolist()) == {1, 2, 3}

@@ -27,7 +27,19 @@ class EEGArrayDataset(Dataset):
         return torch.from_numpy(self.x[idx]), torch.tensor(self.y[idx], dtype=torch.long)
 
 
-def load_bci_iv_2a_npz(path: str | Path) -> tuple[np.ndarray, np.ndarray]:
+def _normalize_bci_labels(y: np.ndarray) -> np.ndarray:
+    y = y.astype(np.int64)
+    if y.ndim != 1:
+        y = y.reshape(-1)
+    if y.min() == 1:
+        y = y - 1
+    return y
+
+
+def load_bci_iv_2a_npz(
+    path: str | Path,
+    return_subjects: bool = False,
+) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray]:
     npz_path = Path(path)
     if not npz_path.exists():
         raise FileNotFoundError(f"BCI-IV 2a npz not found: {npz_path}")
@@ -41,13 +53,27 @@ def load_bci_iv_2a_npz(path: str | Path) -> tuple[np.ndarray, np.ndarray]:
 
     if x.ndim != 3:
         raise ValueError("x must be [N, C, T]")
-    if y.ndim != 1:
-        y = y.reshape(-1)
+    y = _normalize_bci_labels(y)
 
-    y = y.astype(np.int64)
-    if y.min() == 1:
-        y = y - 1
-    return x.astype(np.float32), y
+    if x.shape[0] != y.shape[0]:
+        raise ValueError("x and y must have the same number of samples")
+
+    if not return_subjects:
+        return x.astype(np.float32), y
+
+    subject_key = None
+    for key in ("subjects", "subject"):
+        if key in data:
+            subject_key = key
+            break
+
+    if subject_key is None:
+        raise ValueError("NPZ must contain 'subjects' (or 'subject') for LOSO evaluation")
+
+    subjects = data[subject_key].astype(np.int64).reshape(-1)
+    if subjects.shape[0] != x.shape[0]:
+        raise ValueError("subjects must have the same number of samples as x")
+    return x.astype(np.float32), y, subjects
 
 
 def split_bci_dataset(
