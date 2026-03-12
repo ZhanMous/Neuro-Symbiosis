@@ -18,6 +18,7 @@ class SNNBaselineNet(nn.Module):
         dropout: float,
     ) -> None:
         super().__init__()
+        self.last_metrics: dict[str, float] = {}
         self.encoder = SNNTemporalEncoder(
             in_channels=in_channels,
             hidden_dim=snn_hidden,
@@ -32,7 +33,12 @@ class SNNBaselineNet(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        tokens, spike_rate = self.encoder(x)
+        tokens, spike_rate, effective_token_length = self.encoder(x)
         pooled = tokens.mean(dim=1)
         logits = self.head(pooled)
+        self.last_metrics = {
+            "spike_rate": float(spike_rate.detach().item()),
+            "effective_token_length": float(effective_token_length.detach().item()),
+            "sequence_length": float(tokens.shape[1]),
+        }
         return logits, spike_rate

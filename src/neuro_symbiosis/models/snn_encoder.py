@@ -53,7 +53,7 @@ class SNNTemporalEncoder(nn.Module):
         self.lif = LIFBlock(beta=beta, threshold=threshold)
         self.out_proj = nn.Linear(hidden_dim, embed_dim)
 
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         # x: [B, C, T]
         h = self.norm(self.input_proj(x))  # [B, H, T]
         h = h.transpose(1, 2)  # [B, T, H]
@@ -69,4 +69,6 @@ class SNNTemporalEncoder(nn.Module):
         spk_seq = torch.stack(spikes, dim=1)  # [B, T, H]
         tokens = self.out_proj(spk_seq)  # [B, T, D]
         spike_rate = spk_seq.mean()
-        return tokens, spike_rate
+        active_steps = (spk_seq.sum(dim=2) > 0).to(spk_seq.dtype)  # [B, T]
+        effective_token_length = active_steps.sum(dim=1).mean()
+        return tokens, spike_rate, effective_token_length

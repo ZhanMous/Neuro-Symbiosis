@@ -31,12 +31,13 @@ def resolve_device(device_name: str) -> torch.device:
     return torch.device("cpu")
 
 
-def evaluate(model: nn.Module, loader: DataLoader, criterion: nn.Module, device: torch.device) -> tuple[float, float, float]:
+def evaluate(model: nn.Module, loader: DataLoader, criterion: nn.Module, device: torch.device) -> tuple[float, float, float, float]:
     model.eval()
     total_loss = 0.0
     total_correct = 0
     total_count = 0
     spike_rates = []
+    eff_token_lengths = []
 
     with torch.no_grad():
         for x, y in loader:
@@ -50,11 +51,15 @@ def evaluate(model: nn.Module, loader: DataLoader, criterion: nn.Module, device:
             total_count += int(y.numel())
             total_loss += float(loss.item()) * y.size(0)
             spike_rates.append(float(spike_rate.item()))
+            inner = model._module if hasattr(model, "_module") else model
+            if hasattr(inner, "last_metrics"):
+                eff_token_lengths.append(inner.last_metrics.get("effective_token_length", 0.0))
 
     avg_loss = total_loss / max(total_count, 1)
     acc = total_correct / max(total_count, 1)
     avg_spike = float(np.mean(spike_rates)) if spike_rates else 0.0
-    return avg_loss, acc, avg_spike
+    avg_eff_tokens = float(np.mean(eff_token_lengths)) if eff_token_lengths else 0.0
+    return avg_loss, acc, avg_spike, avg_eff_tokens
 
 
 def train_from_config(cfg: dict) -> dict:
@@ -126,7 +131,7 @@ def train_from_config(cfg: dict) -> dict:
             pbar.set_postfix(loss=float(loss.item()), spike_rate=float(spike_rate.item()))
 
         train_loss = running_loss / max(running_count, 1)
-        val_loss, val_acc, val_spike = evaluate(model, val_loader, criterion, device)
+        val_loss, val_acc, val_spike, val_eff_tokens = evaluate(model, val_loader, criterion, device)
 
         row = {
             "epoch": epoch + 1,
@@ -134,6 +139,7 @@ def train_from_config(cfg: dict) -> dict:
             "val_loss": val_loss,
             "val_acc": val_acc,
             "val_spike_rate": val_spike,
+            "val_effective_token_length": val_eff_tokens,
         }
 
         if privacy_engine is not None:
